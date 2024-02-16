@@ -186,7 +186,7 @@ public class GameJFrame extends JFrame implements KeyListener, ActionListener {
         // 宽、高
         this.setSize(603, 680);
         // 标题
-        this.setTitle("拼图游戏v1.0");
+        this.setTitle("拼图游戏v1.1");
         // 居中
         this.setLocationRelativeTo(null);
         // 置顶
