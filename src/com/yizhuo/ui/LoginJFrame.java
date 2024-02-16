@@ -26,6 +26,8 @@ public class LoginJFrame extends JFrame implements MouseListener {
     JLabel reveal = new JLabel(revealIcon);
     //用户名的文本输入框
     JTextField userInput = new JTextField(20);
+    //获取用户名
+    public static String username;
     //密码的密文输入框
     JPasswordField passInput = new JPasswordField(20);
     //验证码的文本输入框
@@ -37,6 +39,7 @@ public class LoginJFrame extends JFrame implements MouseListener {
     JDialog checkPassed = new JDialog();
 
     public LoginJFrame() {
+        Database.createTableIfNotExists();
         mainFrame= this;
         initJFrame();
         initImage();
@@ -108,13 +111,14 @@ public class LoginJFrame extends JFrame implements MouseListener {
 
     @Override
     public void mousePressed(MouseEvent e) {
-        if (e.getSource() == login){
+        Object source = e.getSource();
+        if (source == login){
             ImageIcon loginPress = new ImageIcon(path +"loginPress.png");
             login.setIcon(loginPress);
-        }else if (e.getSource() == register){
+        }else if (source == register){
             ImageIcon registerPress = new ImageIcon(path + "registerPress.png");
             register.setIcon(registerPress);
-        }else if (e.getSource() == reveal){
+        }else if (source == reveal){
             ImageIcon revealing = new ImageIcon(path + "revealing.png");
             reveal.setIcon(revealing);
             passInput.setEchoChar((char) 0);
@@ -123,9 +127,10 @@ public class LoginJFrame extends JFrame implements MouseListener {
 
     @Override
     public void mouseReleased(MouseEvent e) {
-        if (e.getSource() == login){
+        Object source = e.getSource();
+        if (source == login){
             login.setIcon(loginIcon);
-            String username = userInput.getText();
+            username = userInput.getText();
             String password = new String(passInput.getPassword());
             String checkCode = codeInput.getText();
             if(Database.checkUsernameExists(username)){
@@ -136,7 +141,8 @@ public class LoginJFrame extends JFrame implements MouseListener {
                         JLabel codeError = new JLabel("验证码错误");
                         initDialog(codeError, loginInvalid);
                         loginInvalid.setVisible(true);
-                        code.setText(CheckCode.generator());
+                        generatedCode = CheckCode.generator();
+                        code.setText(generatedCode);
                     }else{
                         JLabel loginSuccess = new JLabel("登录成功");
                         initDialog(loginSuccess, checkPassed);
@@ -151,24 +157,24 @@ public class LoginJFrame extends JFrame implements MouseListener {
                         new GameJFrame();
                     }
                 }else {
-                    userInput.setText(null);
-                    passInput.setText(null);
+                    inputClear();
                     JDialog loginInvalid = new JDialog();
                     JLabel passwordIncorrect = new JLabel("用户名和密码不匹配");
                     initDialog(passwordIncorrect, loginInvalid);
                     loginInvalid.setVisible(true);
                 }
             }else{
+                inputClear();
                 JDialog loginInvalid = new JDialog();
                 JLabel usernameNotExist = new JLabel("用户名不存在");
                 initDialog(usernameNotExist, loginInvalid);
                 loginInvalid.setVisible(true);
             }
-        }else if (e.getSource() == register){
+        }else if (source == register){
             register.setIcon(registerIcon);
             mainFrame.dispose();
             new RegisterJFrame();
-        }else if (e.getSource() == reveal){
+        }else if (source == reveal){
             reveal.setIcon(revealIcon);
             passInput.setEchoChar('•');
         }
@@ -195,4 +201,10 @@ public class LoginJFrame extends JFrame implements MouseListener {
     public void mouseExited(MouseEvent e) {
 
     }
+    private void inputClear(){
+        userInput.setText(null);
+        passInput.setText(null);
+        codeInput.setText(null);
+    }
 }
+

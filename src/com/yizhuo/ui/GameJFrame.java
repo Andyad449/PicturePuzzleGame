@@ -1,11 +1,18 @@
 package com.yizhuo.ui;
 
+import com.yizhuo.utility.Database;
+
 import javax.swing.*;
 import javax.swing.border.BevelBorder;
+import javax.swing.table.DefaultTableModel;
+import java.awt.*;
 import java.awt.event.*;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.Random;
 
 public class GameJFrame extends JFrame implements KeyListener, ActionListener {
+
     // 创建二维数组，加载图片时会根据二维数组中的数据进行加载
     int[][] data = new int[4][4];
     // 记录空白方块在二维数组中的位置
@@ -14,18 +21,22 @@ public class GameJFrame extends JFrame implements KeyListener, ActionListener {
     String path = "image\\animal\\animal3\\";
     // 定义一个二维数组存储正确的数据
     int[][] win = {
-            { 1, 2, 3, 4 },
-            { 5, 6, 7, 8 },
-            { 9, 10, 11, 12 },
-            { 13, 14, 15, 0 },
+            {1, 2, 3, 4},
+            {5, 6, 7, 8},
+            {9, 10, 11, 12},
+            {13, 14, 15, 0},
     };
     // 定义一个变量用来记录当前移动了多少步
     int count = 0;
+    //判断此次胜利是否作弊
+    boolean flag = false;
 
     // 创建选项下面的条目对象
+    JMenuItem fastestItem = new JMenuItem("最快记录");
     JMenuItem rePlayItem = new JMenuItem("重新游戏");
     JMenuItem reLoginItem = new JMenuItem("重新登录");
     JMenuItem closeItem = new JMenuItem("关闭游戏");
+    JMenuItem buttonDescriptionItem = new JMenuItem("按键说明");
 
     JMenuItem accountItem = new JMenuItem("github");
 
@@ -49,7 +60,7 @@ public class GameJFrame extends JFrame implements KeyListener, ActionListener {
 
     private void initData() {
         // 二维数组中的数据对应图片位置
-        int[] tempArr = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15 };
+        int[] tempArr = {0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15};
         Random r = new Random();
         // 打乱一维数组
         for (int i = 0; i < tempArr.length; i++) {
@@ -76,6 +87,25 @@ public class GameJFrame extends JFrame implements KeyListener, ActionListener {
             JLabel winJLabel = new JLabel(new ImageIcon("image\\win.png"));
             winJLabel.setBounds(203, 283, 197, 73);
             this.getContentPane().add(winJLabel);
+            if (!flag) {
+                Date now = new Date();
+                Database.updateRecord(count,now);
+            }else{
+                JDialog isCheat = new JDialog();
+                isCheat.setTitle("oops!");
+                isCheat.setSize(300,300);
+                isCheat.setAlwaysOnTop(true);
+                isCheat.setLocationRelativeTo(null);
+                isCheat.setModal(true);
+                JTextArea prompt = new JTextArea("\n\n\n\n\n你使用了魔法通关，本次成绩不会记录");
+                prompt.setColumns(12);
+                prompt.setLineWrap(true);
+                prompt.setEditable(false);
+                Font font = new Font("黑体", Font.BOLD,16);
+                prompt.setFont(font);
+                isCheat.add(prompt);
+                isCheat.setVisible(true);
+            }
         }
 
         JLabel counter = new JLabel("步数：" + count);
@@ -109,9 +139,10 @@ public class GameJFrame extends JFrame implements KeyListener, ActionListener {
         // 最上面的大长条
         JMenuBar jMenuBar = new JMenuBar();
 
-        // 创建两个选项的对象：功能、关于我们
+        // 创建三个选项的对象：功能、游戏帮助、关于我们
         JMenu functionJMenu = new JMenu("功能");
         JMenu aboutJMenu = new JMenu("关于我们");
+        JMenu helpJMenu = new JMenu("游戏帮助");
         // 创建“功能”下的更换图片JMenu
         JMenu changeImageJMenu = new JMenu("更换图片");
 
@@ -120,10 +151,13 @@ public class GameJFrame extends JFrame implements KeyListener, ActionListener {
 
         // 将每一个选项下面的条目添加到选项中
         functionJMenu.add(changeImageJMenu);
+        functionJMenu.add(fastestItem);
         functionJMenu.add(rePlayItem);
         functionJMenu.add(reLoginItem);
         functionJMenu.add(closeItem);
         aboutJMenu.add(accountItem);
+        helpJMenu.add(buttonDescriptionItem);
+
         // 将三个子选项添加到更换图片的选项中
         changeImageJMenu.add(girlItem);
         changeImageJMenu.add(sportsItem);
@@ -133,12 +167,15 @@ public class GameJFrame extends JFrame implements KeyListener, ActionListener {
         girlItem.addActionListener(this);
         sportsItem.addActionListener(this);
         animalItem.addActionListener(this);
+        fastestItem.addActionListener(this);
         rePlayItem.addActionListener(this);
         reLoginItem.addActionListener(this);
         closeItem.addActionListener(this);
         accountItem.addActionListener(this);
+        buttonDescriptionItem.addActionListener(this);
         // 将两个选项添加到上面的大长条
         jMenuBar.add(functionJMenu);
+        jMenuBar.add(helpJMenu);
         jMenuBar.add(aboutJMenu);
 
         // 给整个界面设置菜单，对象名写this代表当前创建的这个GameJFrame对象（继承自JFrame）
@@ -189,7 +226,7 @@ public class GameJFrame extends JFrame implements KeyListener, ActionListener {
 
     @Override
     public void keyReleased(KeyEvent e) throws ArrayIndexOutOfBoundsException {
-        // 判断游戏是否胜利，如果胜利，此方法应直接结束，不能再执行下面的移动代码了
+        // 判断游戏是否胜利，如果胜利，应更新完数据库后直接结束，不能再执行下面的移动代码了
         if (victory()) {
             return;
         }
@@ -224,11 +261,12 @@ public class GameJFrame extends JFrame implements KeyListener, ActionListener {
             } else if (code == 65) {
                 initImage();
             } else if (code == 86) {
-                data = new int[][] {
-                        { 1, 2, 3, 4 },
-                        { 5, 6, 7, 8 },
-                        { 9, 10, 11, 12 },
-                        { 13, 14, 15, 0 },
+                flag = true;
+                data = new int[][]{
+                        {1, 2, 3, 4},
+                        {5, 6, 7, 8},
+                        {9, 10, 11, 12},
+                        {13, 14, 15, 0},
                 };
                 initImage();
             }
@@ -253,7 +291,18 @@ public class GameJFrame extends JFrame implements KeyListener, ActionListener {
     @Override
     public void actionPerformed(ActionEvent e) {
         Object source = e.getSource();
-        if (source == rePlayItem) {
+        if (source == fastestItem) {
+            JDialog fastest = new JDialog();
+            fastest.setTitle("最快步数记录");
+            fastest.setSize(500, 150);
+            fastest.setLocationRelativeTo(null);
+            JTable table = GameJFrame.initTable();
+            table.setEnabled(false);
+            fastest.getContentPane().add(new JScrollPane(table));
+            fastest.setAlwaysOnTop(true);
+            fastest.setModal(true);
+            fastest.setVisible(true);
+        } else if (source == rePlayItem) {
             // 重新游戏：重新打乱二维数组中的数据；重新加载图片；计步器清零
             count = 0;
             initData();
@@ -280,23 +329,60 @@ public class GameJFrame extends JFrame implements KeyListener, ActionListener {
             System.exit(0);
         } else if (source == girlItem) {
             int randNum = new Random().nextInt(13) + 1;
-            path = "image\\girl\\girl"+randNum+"\\";
+            path = "image\\girl\\girl" + randNum + "\\";
             count = 0;
             initData();
             initImage();
-        }else if(source == sportsItem){
+        } else if (source == sportsItem) {
             int randNum = new Random().nextInt(10) + 1;
-            path = "image\\sport\\sport"+randNum+"\\";
+            path = "image\\sport\\sport" + randNum + "\\";
             count = 0;
             initData();
             initImage();
-        }else if (source == animalItem){
+        } else if (source == animalItem) {
             int randNum = new Random().nextInt(8) + 1;
-            path = "image\\animal\\animal"+randNum+"\\";
+            path = "image\\animal\\animal" + randNum + "\\";
             count = 0;
             initData();
             initImage();
+        } else if (source == buttonDescriptionItem) {
+            JDialog prompt = new JDialog();
+            JTextArea words = new JTextArea("按方向键移动图片，按住A键不松可查看完整图片，努力用更少的步数来还原图片吧！");
+            words.setLineWrap(true);
+            words.setEditable(false);
+            Font font = new Font("黑体", Font.BOLD, 14);
+            words.setFont(font);
+            prompt.getContentPane().add(words);
+            prompt.setTitle("操作说明");
+            prompt.setSize(356, 220);
+            prompt.setLocationRelativeTo(null);
+            prompt.setAlwaysOnTop(true);
+            prompt.setModal(true);
+            prompt.setVisible(true);
+        }
+    }
+
+    public static JTable initTable() {
+        DefaultTableModel model = new DefaultTableModel(
+                new Object[][]{
+
+                },
+                new String[]{
+                        "ranking", "username", "steps", "date"
+                }
+        );
+        ArrayList<String> arrayList = Database.searchTOP5();
+        Object[] temp = arrayList.toArray();
+        Object[][] result = new Object[5][4];
+        for (int i = 0; i < temp.length; i++) {
+            int rowindex = i / 4;
+            int colindex = i % 4;
+            result[rowindex][colindex] = temp[i];
+        }
+        for (Object[] objects : result) {
+            model.addRow(objects);
         }
 
+        return new JTable(model);
     }
 }
